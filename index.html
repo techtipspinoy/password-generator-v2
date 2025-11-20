@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <style>
+        /* --- CSS for Styling --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+            padding-top: 50px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* Input and Button Styling */
+        .setting {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .checkbox-group div {
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Result Area */
+        .result-container {
+            margin-top: 30px;
+            display: flex;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #password-display {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: #e9ecef;
+            border: none;
+            font-size: 18px;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #copy-button {
+            width: auto;
+            padding: 10px 15px;
+            background-color: #28a745;
+            border-radius: 0;
+            border-left: 1px solid #ccc;
+        }
+
+        #copy-button:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Password Generator</h1>
+
+        <div class="setting">
+            <label for="length">Password Length: <span id="length-value">12</span></label>
+            <input type="range" id="length" min="8" max="128" value="12">
+        </div>
+
+        <div class="setting">
+            <label>Include Character Types:</label>
+            <div class="checkbox-group">
+                <div><input type="checkbox" id="uppercase" checked><label for="uppercase">Uppercase (A-Z)</label></div>
+                <div><input type="checkbox" id="lowercase" checked><label for="lowercase">Lowercase (a-z)</label></div>
+                <div><input type="checkbox" id="numbers" checked><label for="numbers">Numbers (0-9)</label></div>
+                <div><input type="checkbox" id="symbols"><label for="symbols">Symbols (!@#$%)</label></div>
+            </div>
+        </div>
+
+        <button id="generate-button">Generate Password</button>
+
+        <div class="result-container">
+            <div id="password-display">Click 'Generate Password'</div>
+            <button id="copy-button">Copy</button>
+        </div>
+    </div>
+
+    <script>
+        // --- JavaScript for Logic ---
+
+        // Character Sets
+        const CHAR_SETS = {
+            uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lowercase: 'abcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()_+~`|}{[]:;?><,./-='
+        };
+
+        // DOM Elements
+        const lengthSlider = document.getElementById('length');
+        const lengthValueSpan = document.getElementById('length-value');
+        const generateButton = document.getElementById('generate-button');
+        const passwordDisplay = document.getElementById('password-display');
+        const copyButton = document.getElementById('copy-button');
+
+        // Update length value display when slider moves
+        lengthSlider.addEventListener('input', () => {
+            lengthValueSpan.textContent = lengthSlider.value;
+        });
+
+        // --- Core Generation Logic ---
+        function generatePassword() {
+            const length = parseInt(lengthSlider.value);
+            let characterPool = '';
+            let generatedPassword = '';
+            let requiredChars = []; // Array to ensure at least one of each selected type is included
+
+            // 1. Build the total character pool and collect required initial characters
+            if (document.getElementById('uppercase').checked) {
+                characterPool += CHAR_SETS.uppercase;
+                requiredChars.push(CHAR_SETS.uppercase[Math.floor(Math.random() * CHAR_SETS.uppercase.length)]);
+            }
+            if (document.getElementById('lowercase').checked) {
+                characterPool += CHAR_SETS.lowercase;
+                requiredChars.push(CHAR_SETS.lowercase[Math.floor(Math.random() * CHAR_SETS.lowercase.length)]);
+            }
+            if (document.getElementById('numbers').checked) {
+                characterPool += CHAR_SETS.numbers;
+                requiredChars.push(CHAR_SETS.numbers[Math.floor(Math.random() * CHAR_SETS.numbers.length)]);
+            }
+            if (document.getElementById('symbols').checked) {
+                characterPool += CHAR_SETS.symbols;
+                requiredChars.push(CHAR_SETS.symbols[Math.floor(Math.random() * CHAR_SETS.symbols.length)]);
+            }
+
+            // Fallback if no options are selected
+            if (characterPool === '') {
+                passwordDisplay.textContent = 'Select at least one character type!';
+                return;
+            }
+
+            // 2. Add the required characters to the start of the password
+            generatedPassword += requiredChars.join('');
+
+            // 3. Fill the rest of the password length from the full character pool
+            for (let i = generatedPassword.length; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characterPool.length);
+                generatedPassword += characterPool[randomIndex];
+            }
+
+            // 4. Shuffle the final password to ensure randomness (required chars are not always at the start)
+            generatedPassword = generatedPassword.split('').sort(() => Math.random() - 0.5).join('');
+
+            passwordDisplay.textContent = generatedPassword;
+        }
+
+        // --- Copy to Clipboard Logic ---
+        function copyPassword() {
+            const password = passwordDisplay.textContent;
+
+            // Use the modern clipboard API
+            navigator.clipboard.writeText(password).then(() => {
+                const originalText = copyButton.textContent;
+                copyButton.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyButton.textContent = originalText;
+                }, 1500);
+            }).catch(err => {
+                // Fallback for older browsers
+                console.error('Failed to copy text: ', err);
+                alert('Copy failed. Please select and copy manually.');
+            });
+        }
+
+        // Event Listeners
+        generateButton.addEventListener('click', generatePassword);
+        copyButton.addEventListener('click', copyPassword);
+
+        // Initial generation on load
+        generatePassword();
+    </script>
+</body>
+</html>
